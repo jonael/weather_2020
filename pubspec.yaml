@@ -23,20 +23,17 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  universal_platform: ^1.0.0+1
   shared_preferences: ^2.0.6
-  http: ^0.13.3
-  geocoding: ^2.0.0
-  geocoder: ^0.2.1
   location: ^4.3.0
-  location_platform_interface: ^2.3.0
-  geocoding_platform_interface: ^2.0.0
-
-
+  http: ^0.13.3
+  google_geocoding: ^0.2.0
+  geolocator: ^7.3.1
+  geocode: 1.0.1
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^1.0.3
+  cupertino_icons: ^0.1.3
+  flutter_dotenv: ^5.0.0
 
 dev_dependencies:
   flutter_test:
@@ -72,7 +69,7 @@ flutter:
     - assets/n.jpg
     - assets/d2.jpg
     - assets/d1.jpg
-
+    - .env
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.
 

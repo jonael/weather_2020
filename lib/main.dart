@@ -1,52 +1,35 @@
-import 'dart:async';
-import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:geocoder/geocoder.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:geocode/geocode.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:google_geocoding/google_geocoding.dart';
 import 'package:location/location.dart';
+import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:universal_platform/universal_platform.dart';
+import 'package:http/http.dart' as http;
 import 'temps.dart';
 import 'dart:convert';
 import 'my_flutter_app_icons.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-  Location location = new Location();
+  var googleGeocoding = GoogleGeocoding("AIzaSyAB9v38gUwrBEJgihjiKDdmCQUfG2BnJ30");
   LocationData position;
   try {
-    position = (await location.getLocation()) ;
+    Position position = await Geolocator.getLastKnownPosition();
     print(position);
-  } on UniversalPlatform catch (e) {
+  } on PlatformException catch (e) {
     print("Erreur: $e");
   }
-  if (position != null) {
-    final latitude = position.latitude;
-    final longitude = position.longitude;
-    final Coordinates coordinates = new Coordinates(latitude, longitude);
-    print(coordinates);
-    if(UniversalPlatform.isAndroid || UniversalPlatform.isIOS) {
-      try {
-        final ville = await Geocoder.local.findAddressesFromCoordinates();
-        if (ville != null) {
-          print(ville.first.locality);
-          runApp(new MyApp(ville.first.locality));
-        }
-      } on PlatformException catch (e) {
-        print ('oups');
-      }
-    } else {
-      try {
-        final ville = await Geocoder.local.findAddressesFromCoordinates(coordinates);
-        if (ville != null) {
-          print(ville.first.locality);
-          runApp(new MyApp(ville.first.locality));
-        }
-      } on PlatformException catch (e) {
-        print ('oups');
-      }
-    }
+  final latitude = position.latitude;
+  final longitude = position.longitude;
+  final ville = await googleGeocoding.geocoding.getReverse(LatLon(latitude,longitude));
+  if (ville != null) {
+    print(ville.results.first.formattedAddress);
+    runApp(new MyApp(ville.results.first.formattedAddress));
   }
 }
 
@@ -268,7 +251,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void obtenir() async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    List<String> liste = sharedPreferences.getStringList(key);
+    List<String> liste = await sharedPreferences.getStringList(key);
     if (liste != null) {
       setState(() {
         villes = liste;
@@ -292,17 +275,18 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void appelApi() async {
     String str;
+    var googleGeocoding = GoogleGeocoding("AIzaSyAB9v38gUwrBEJgihjiKDdmCQUfG2BnJ30");
     if (villeChoisie == null) {
       str = widget.villeDeLutilisateur;
     } else {
       str = villeChoisie;
     }
-    List<Address> coord = await Geocoder.local.findAddressesFromQuery(str);
+    List<Address> coord = (await googleGeocoding.geocoding.get(str, null)) as List;
     if (coord != null) {
       final lat = coord.first.coordinates.latitude;
       final lon = coord.first.coordinates.longitude;
       String lang = Localizations.localeOf(context).languageCode;
-      final key = "85d1a5953f91f37020fa288f7e0badbe";
+      final key = "636bf265ae916d48a0c7e6d872fa1fd6";
 
       String urlApi = "http://api.openweathermap.org/data/2.5/weather?lat=$lat&lon=$lon&units=metric&lang=$lang&APPID=$key";
 
